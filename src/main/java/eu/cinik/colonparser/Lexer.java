@@ -62,28 +62,49 @@ interface LexerState {
 
 class QuotedState implements LexerState {
     private StringBuffer buffer = new StringBuffer();
-    boolean accepted = false;
+
+    private enum State {NoState, Accepted, SlashQuote, Terminate}
+
+    private State state = State.NoState;
 
     @Override
     public boolean accept(int c) throws LexerException {
-        if (c == -1) {
-            throw new LexerException("Unexpected EOF");
-        } else if (!accepted && c == '\"') {
-            this.accepted = true;
-            return true;
-        } else if (accepted && c == '\"') {
-            this.accepted = false;
-            return false;
-        } else if (accepted) {
-            buffer.append((char) c);
-            return true;
-        } else return false;
+        switch (state) {
+            case NoState:
+                if (c == '\"') {
+                    this.state = State.Accepted;
+                    return true;
+                } else return false;
+            case Accepted:
+                if (c == -1) {
+                    throw new LexerException("Unexpected EOF");
+                }
+                if (c == '\"') this.state = State.Terminate;
+                else if (c == '\\') {
+                    this.state = State.SlashQuote;
+                } else {
+                    buffer.append((char) c);
+                    return true;
+                }
+                return true;
+            case SlashQuote:
+                if (c == -1) {
+                    throw new LexerException("Unexpected EOF");
+                }
+                buffer.append((char) c);
+                this.state = State.Accepted;
+                return true;
+            case Terminate:
+                return false;
+            default:
+                return false;
+        }
     }
 
     @Override
     public void reset() {
         buffer = new StringBuffer();
-        this.accepted = false;
+        this.state = State.NoState;
     }
 
     @Override

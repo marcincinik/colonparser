@@ -11,7 +11,7 @@ import java.util.LinkedList;
 public class Example {
 
     public static void main(String[] args) throws IOException {
-        try (StringReader r = new StringReader("abc def AND x OR y (-key1:value1 OR -key2:value2) -key3:value3")) {
+        try (StringReader r = new StringReader("abc \"def and foo\" AND x OR y (-key1:value1 OR -key2:value2) -key3:value3")) {
             Parser.Node node = new Parser(r).statement();
             Deque<String> stack = new LinkedList<>();
             Parser.NodeVisitor visitor = new Parser.NodeVisitor() {

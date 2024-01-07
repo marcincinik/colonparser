@@ -113,6 +113,15 @@ public class LexerTest {
     @Test
     public void lexerQuotedText4() throws IOException {
         Lexer l = new Lexer();
+        try (StringReader r = new StringReader("\"\\\"\"")) {
+            Token t = l.next(r);
+            Assert.assertEquals(new TextToken(TokenType.TEXTTOKEN, "\""), t);
+        }
+    }
+
+    @Test
+    public void lexerQuotedText5() throws IOException {
+        Lexer l = new Lexer();
         try (StringReader r = new StringReader("\"")) {
             try {
                 Token t = l.next(r);

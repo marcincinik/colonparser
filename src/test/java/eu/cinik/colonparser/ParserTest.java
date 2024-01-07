@@ -5,8 +5,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -24,6 +22,12 @@ public class ParserTest {
             Parser.Node node = new Parser(r).statement();
             List<String> polish = Parser.toPolishNotation(node);
             assertPolishNotation(expected.length, polish, expected);
+        }
+    }
+
+    void assertParsingNoException(String program) throws IOException {
+        try (StringReader r = new StringReader(program)) {
+            new Parser(r).statement();
         }
     }
 
@@ -125,13 +129,18 @@ public class ParserTest {
     }
 
     @Test
-    public void complexTest1() throws Exception{
-        assertProgram("(key1:value1 OR key2:value2) key3:value3", ",", "OR", ":", "key1", "value1",":","key2","value2", ":","key3", "value3");
+    public void complexTest1() throws Exception {
+        assertProgram("(key1:value1 OR key2:value2) key3:value3", ",", "OR", ":", "key1", "value1", ":", "key2", "value2", ":", "key3", "value3");
     }
 
     @Test
-    public void complexTest2() throws Exception{
-        assertProgram("(-key1:value1 OR -key2:value2) -key3:value3", ",", "OR", "-",":", "key1", "value1","-",":","key2","value2", "-",":","key3", "value3");
+    public void complexTest2() throws Exception {
+        assertProgram("(-key1:value1 OR -key2:value2) -key3:value3", ",", "OR", "-", ":", "key1", "value1", "-", ":", "key2", "value2", "-", ":", "key3", "value3");
+    }
+
+    @Test
+    public void complexTest3() throws Exception {
+        assertParsingNoException("abc \"def and foo\" AND x OR y (-key1:value1 OR -key2:value2) -key3:value3");
     }
 
 }
