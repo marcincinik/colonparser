@@ -1,10 +1,8 @@
 package eu.cinik.colonqueryparser;
 
-import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Supplier;
 
 public class Parser {
     private Lexer lexer = new Lexer();
@@ -15,14 +13,14 @@ public class Parser {
         this.reader = reader;
     }
 
-    Token token() throws IOException {
+    Token token() {
         if (currentToken == null) {
             currentToken = this.lexer.next(reader);
         }
         return currentToken;
     }
 
-    <T extends Token> T consumeToken(Class<T> c) throws IOException {
+    <T extends Token> T consumeToken(Class<T> c) {
         if (currentToken == null) {
             currentToken = this.lexer.next(reader);
         }
@@ -33,19 +31,19 @@ public class Parser {
         }
     }
 
-    <T extends Token> T verify(Class<T> t, TokenType tokenType) throws IOException {
+    <T extends Token> T verify(Class<T> t, TokenType tokenType) {
         if (token() != null && token().getTokenType() == tokenType && token().getClass().equals(t)) {
             return (T) currentToken;
         } else return null;
     }
 
-    <T extends Token> T consume(Class<T> t, TokenType tokenType) throws IOException {
+    <T extends Token> T consume(Class<T> t, TokenType tokenType) {
         if (token() != null && token().getTokenType() == tokenType && token().getClass().equals(t)) {
             return consumeToken(t);
         } else return null;
     }
 
-    <T extends Token> T expect(Class<T> t, TokenType tokenType) throws IOException {
+    <T extends Token> T expect(Class<T> t, TokenType tokenType) {
         Token token = consumeToken(t);
         if (token == null)
             throw new ParserException(String.format("Expected token %s but nothing found", tokenType.toString()));
@@ -60,7 +58,7 @@ public class Parser {
         } else return (T) token;
     }
 
-    public Node statement() throws IOException {
+    public Node statement() {
         List<Node> result = new ArrayList<>();
         Node n;
         while ((n = or()) != null) {
@@ -76,7 +74,7 @@ public class Parser {
         } else return new Statement(result);
     }
 
-    Node bracketed() throws IOException {
+    Node bracketed() {
         if ((consume(Token.class, TokenType.OBRACKET)) != null) {
             Node stmt = statement();
             expect(Token.class, TokenType.CBRACKET);
@@ -85,11 +83,11 @@ public class Parser {
     }
 
 
-    Node or() throws IOException {
+    Node or() {
         Node left;
         if ((left = and()) != null) {
-            Text orToken;
-            if ((orToken = verifyText()) != null && orToken.getText().equalsIgnoreCase("OR")) {
+            Text token;
+            if ((token = verifyText()) != null && token.getText().equalsIgnoreCase("OR")) {
                 expectText();
                 Node right = and();
                 if (right != null) {
@@ -100,14 +98,14 @@ public class Parser {
         return left;
     }
 
-    Node and() throws IOException {
+    Node and() {
         //it's a relaxed implementation - if there's no right side, then return left only
         Node left;
-        if ((left = factor()) != null) {
-            Text andToken;
-            if ((andToken = verifyText()) != null && andToken.getText().equalsIgnoreCase("AND")) {
+        if ((left = binaryComparision()) != null) {
+            Text token;
+            if ((token = verifyText()) != null && token.getText().equalsIgnoreCase("AND")) {
                 expectText();
-                Node right = factor();
+                Node right = binaryComparision();
                 if (right != null) {
                     return new AND(left, right);
                 } else return left;
@@ -117,7 +115,38 @@ public class Parser {
     }
 
 
-    Node keyValue() throws IOException {
+    private static final Map<BinaryComparision.Operator, TokenType> binCompToToken = new HashMap<>();
+
+    static {
+        binCompToToken.put(BinaryComparision.Operator.EQ, TokenType.EQ);
+        binCompToToken.put(BinaryComparision.Operator.LT, TokenType.LT);
+        binCompToToken.put(BinaryComparision.Operator.HT, TokenType.HT);
+    }
+
+    Node binaryComparision() {
+        return binaryComparision(BinaryComparision.Operator.LT, () ->
+                binaryComparision(BinaryComparision.Operator.HT, () ->
+                        binaryComparision(BinaryComparision.Operator.EQ, () -> factor())));
+    }
+
+
+    Node binaryComparision(BinaryComparision.Operator oper, Supplier<Node> leftRight) {
+        //it's a relaxed implementation - if there's no right side, then return left only
+        Node left;
+        if ((left = leftRight.get()) != null) {
+            TokenType tt = binCompToToken.get(oper);
+            if ((verify(Token.class, tt)) != null) {
+                expect(Token.class, tt);
+                Node right = leftRight.get();
+                if (right != null) {
+                    return new BinaryComparision(oper, left, right);
+                } else return left;
+            }
+        }
+        return left;
+    }
+
+    Node keyValue() {
         Text key;
         consume(TextToken.class, TokenType.WHITESPACE);
         Token neg = consume(Token.class, TokenType.NEG);
@@ -136,7 +165,7 @@ public class Parser {
 
     }
 
-    Text expectText() throws IOException {
+    Text expectText() {
         Text t = acceptText();
         if (t == null) {
             throw new ParserException("Expected text");
@@ -144,7 +173,7 @@ public class Parser {
         return t;
     }
 
-    Text acceptText() throws IOException {
+    Text acceptText() {
         consume(TextToken.class, TokenType.WHITESPACE);
         TextToken textToken;
         if ((textToken = consume(TextToken.class, TokenType.TEXTTOKEN)) != null) {
@@ -153,7 +182,7 @@ public class Parser {
         } else return null;
     }
 
-    Text verifyText() throws IOException {
+    Text verifyText() {
         consume(TextToken.class, TokenType.WHITESPACE);
         TextToken textToken;
         if ((textToken = verify(TextToken.class, TokenType.TEXTTOKEN)) != null) {
@@ -161,7 +190,7 @@ public class Parser {
         } else return null;
     }
 
-    Node factor() throws IOException {
+    Node factor() {
         Node n;
         consume(TextToken.class, TokenType.WHITESPACE);
         if ((n = keyValue()) != null) {
@@ -169,7 +198,7 @@ public class Parser {
         } else if ((n = bracketed()) != null) {
             return n;
         } else return null;
-            //throw new ParserException("invalid token " + this.currentToken);
+        //throw new ParserException("invalid token " + this.currentToken);
     }
 
     static public class ParserException extends RuntimeException {
@@ -208,6 +237,11 @@ public class Parser {
             public void visit(Statement statement) {
                 result.add(",");
             }
+
+            @Override
+            public void visit(BinaryComparision binaryComparision) {
+                result.add(binaryComparision.operator.label);
+            }
         });
         return result;
     }
@@ -227,6 +261,8 @@ public class Parser {
         void visit(Text text);
 
         void visit(Statement statement);
+
+        void visit(BinaryComparision binaryComparision);
     }
 
     static abstract class Binary implements Node {
@@ -259,6 +295,7 @@ public class Parser {
             return Objects.hash(left, right);
         }
 
+
     }
 
     static public class AND extends Binary {
@@ -286,7 +323,41 @@ public class Parser {
             left.visit(visitor);
             right.visit(visitor);
         }
+    }
 
+    static public class BinaryComparision extends Binary {
+        public enum Operator {
+            HT(">"),
+            LT("<"),
+            EQ("=");
+            private final String label;
+
+            Operator(String label) {
+                this.label = label;
+            }
+
+            public String getLabel() {
+                return label;
+            }
+        }
+
+        private Operator operator;
+
+        public BinaryComparision(Operator operator, Node left, Node right) {
+            super(left, right);
+            this.operator = operator;
+        }
+
+        @Override
+        public void visit(NodeVisitor visitor) {
+            visitor.visit(this);
+            left.visit(visitor);
+            right.visit(visitor);
+        }
+
+        public Operator getOperator() {
+            return operator;
+        }
     }
 
     static public class Text implements Node {

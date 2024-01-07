@@ -20,12 +20,21 @@ class Lexer {
         allStates.add(new SingleCharState('-', TokenType.NEG));
         allStates.add(new SingleCharState('(', TokenType.OBRACKET));
         allStates.add(new SingleCharState(')', TokenType.CBRACKET));
+        allStates.add(new SingleCharState('>', TokenType.HT));
+        allStates.add(new SingleCharState('<', TokenType.LT));
+        allStates.add(new SingleCharState('=', TokenType.EQ));
         allStates.add(new QuotedState());
         allStates.add(new TextState(false));
     }
 
-    Token next(Reader reader) throws IOException, LexerException {
-        if (currentChar == null) currentChar = reader.read();
+    Token next(Reader reader) {
+        if (currentChar == null) {
+            try {
+                currentChar = reader.read();
+            } catch (IOException e) {
+                throw new LexerException(e);
+            }
+        }
         if (currentState == null) {
             this.currentState = this.allStates.stream().filter(lexerState -> lexerState.accept(currentChar))
                     .findFirst().orElse(null);
@@ -33,7 +42,12 @@ class Lexer {
                 throw new LexerException(String.format("Unexpected character [%d] '%c'", currentChar, currentChar));
             }
         }
-        while (currentState.accept(currentChar = reader.read())) {
+        while (true) {
+            try {
+                if (!currentState.accept(currentChar = reader.read())) break;
+            } catch (IOException e) {
+                throw new LexerException(e);
+            }
             ; //do nothing
         }
         Token token = currentState.token();
@@ -46,13 +60,16 @@ class Lexer {
         public LexerException(String message) {
             super(message);
         }
+        public LexerException(Throwable cause) {
+            super(cause);
+        }
     }
 
 }
 
 
 interface LexerState {
-    boolean accept(int c) throws LexerException;
+    boolean accept(int c) ;
 
     void reset();
 
@@ -68,7 +85,7 @@ class QuotedState implements LexerState {
     private State state = State.NoState;
 
     @Override
-    public boolean accept(int c) throws LexerException {
+    public boolean accept(int c) {
         switch (state) {
             case NoState:
                 if (c == '\"') {
@@ -212,6 +229,9 @@ enum TokenType {
     NEG,
     OBRACKET,
     CBRACKET,
+    HT,
+    LT,
+    EQ,
     TEXTTOKEN,
     WHITESPACE,
     EOF

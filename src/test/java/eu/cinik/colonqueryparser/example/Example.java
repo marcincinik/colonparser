@@ -42,6 +42,11 @@ public class Example {
                 public void visit(Parser.Statement statement) {
                     //nothing
                 }
+
+                @Override
+                public void visit(Parser.BinaryComparision binaryComparision) {
+                    stack.push(binaryComparision.getOperator().getLabel());
+                }
             };
             node.visit(visitor);
             while (!stack.isEmpty()) {

@@ -3,7 +3,6 @@ package eu.cinik.colonqueryparser;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -17,7 +16,7 @@ public class ParserTest {
         });
     }
 
-    void assertProgram(String program, String... expected) throws IOException {
+    void assertProgram(String program, String... expected) {
         try (StringReader r = new StringReader(program)) {
             Parser.Node node = new Parser(r).statement();
             List<String> polish = Parser.toPolishNotation(node);
@@ -25,13 +24,13 @@ public class ParserTest {
         }
     }
 
-    void assertParsingNoException(String program) throws IOException {
+    void assertParsingNoException(String program) {
         try (StringReader r = new StringReader(program)) {
             new Parser(r).statement();
         }
     }
 
-    void assertParseException(String expectedMessage, String program) throws IOException {
+    void assertParseException(String expectedMessage, String program) {
         try (StringReader r = new StringReader(program)) {
             try {
                 Parser.Node node = new Parser(r).statement();
@@ -44,103 +43,124 @@ public class ParserTest {
     }
 
     @Test
-    public void testText() throws Exception {
+    public void testText() {
         assertProgram("ABC", "ABC");
     }
 
     @Test
-    public void testText2Statement() throws Exception {
+    public void testText2Statement() {
         assertProgram("ABC DEF", ",", "ABC", "DEF");
     }
 
     @Test
-    public void testKeyValue() throws Exception {
+    public void testKeyValue() {
         assertProgram("KEY:VALUE", ":", "KEY", "VALUE");
     }
 
     @Test
-    public void testNegKeyValue() throws Exception {
+    public void testNegKeyValue() {
         assertProgram("-KEY:VALUE", "-", ":", "KEY", "VALUE");
     }
 
     @Test
-    public void testNegKeyAsText() throws Exception {
+    public void testNegKeyAsText() {
         assertProgram("-", "-");
     }
 
     @Test
-    public void testAND1() throws Exception {
+    public void testAND1() {
         assertProgram("t1 AND t2", "AND", "t1", "t2");
     }
 
     @Test
-    public void testAND2() throws Exception {
+    public void testAND2() {
         assertProgram("t1 AND", "t1");
     }
 
     @Test
-    public void testOR1() throws Exception {
+    public void testOR1() {
         assertProgram("t1 OR t2", "OR", "t1", "t2");
     }
 
     @Test
-    public void testOR2() throws Exception {
+    public void testOR2() {
         assertProgram("t1 OR", "t1");
     }
 
     @Test
-    public void testAND_OR1() throws Exception {
+    public void testAND_OR1() {
         assertProgram("t1 OR t2 AND t3", "OR", "t1", "AND", "t2", "t3");
     }
 
     @Test
-    public void testAND_OR2() throws Exception {
+    public void testAND_OR2() {
         assertProgram("t1 AND t2 OR t3", "OR", "AND", "t1", "t2", "t3");
     }
 
     @Test
-    public void testBracketed1() throws Exception {
+    public void testBracketed1() {
         assertProgram("(t1)", "t1");
     }
 
     @Test
-    public void testBracketed2() throws Exception {
+    public void testBracketed2() {
         assertProgram("(t1 t2)", ",", "t1", "t2");
     }
 
     @Test
-    public void testBracketed3() throws Exception {
+    public void testBracketed3() {
         assertProgram("(t1 AND t2)", "AND", "t1", "t2");
     }
 
     @Test
-    public void testBracketed4() throws Exception {
+    public void testBracketed4() {
         assertProgram("(t1 OR t2)", "OR", "t1", "t2");
     }
 
     @Test
-    public void testBracketed5() throws Exception {
+    public void testBracketed5() {
         assertProgram("t1 (t2 OR t3)", ",", "t1", "OR", "t2", "t3");
     }
 
     @Test
-    public void testBracketed6() throws Exception {
+    public void testBracketed6() {
         assertProgram("(t1 OR t2) t3", ",", "OR", "t1", "t2", "t3");
     }
 
     @Test
-    public void complexTest1() throws Exception {
+    public void complexTest1() {
         assertProgram("(key1:value1 OR key2:value2) key3:value3", ",", "OR", ":", "key1", "value1", ":", "key2", "value2", ":", "key3", "value3");
     }
 
     @Test
-    public void complexTest2() throws Exception {
+    public void complexTest2() {
         assertProgram("(-key1:value1 OR -key2:value2) -key3:value3", ",", "OR", "-", ":", "key1", "value1", "-", ":", "key2", "value2", "-", ":", "key3", "value3");
     }
 
     @Test
-    public void complexTest3() throws Exception {
+    public void complexTest3() {
         assertParsingNoException("abc \"def and foo\" AND x OR y (-key1:value1 OR -key2:value2) -key3:value3");
     }
+
+    @Test
+    public void binaryComparision1() {
+        assertProgram("t1 > t2", ">", "t1", "t2");
+    }
+
+    @Test
+    public void binaryComparision2() {
+        assertProgram("t1 < t2", "<", "t1", "t2");
+    }
+
+    @Test
+    public void binaryComparision3() {
+        assertProgram("t1 = t2", "=", "t1", "t2");
+    }
+
+    @Test
+    public void complexTest4() {
+        assertParsingNoException("t1 > t2 AND t3 < t4 OR (t5 = t6)");
+    }
+
 
 }
