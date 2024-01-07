@@ -8,13 +8,13 @@ import java.util.*;
 
 
 class Lexer {
-    private List<LexerState> allStates = new ArrayList<LexerState>();
+    static private List<LexerState> allStates = new ArrayList<LexerState>();
     private LexerState currentState = null;
     private Integer currentChar;
 
-    Lexer() {
+
+    static {
         allStates.add(new EOFState());
-        allStates.add(new TextState(true));
         allStates.add(new SingleCharState(':', TokenType.COLON));
         allStates.add(new SingleCharState('*', TokenType.STAR));
         allStates.add(new SingleCharState('-', TokenType.NEG));
@@ -24,7 +24,12 @@ class Lexer {
         allStates.add(new SingleCharState('<', TokenType.LT));
         allStates.add(new SingleCharState('=', TokenType.EQ));
         allStates.add(new QuotedState());
+        allStates.add(new TextState(true));
         allStates.add(new TextState(false));
+    }
+
+    Lexer() {
+
     }
 
     Token next(Reader reader) {
@@ -138,9 +143,11 @@ class TextState implements LexerState {
 
     static {
         forbidden.add(':');
-        forbidden.add('*');
         forbidden.add(')');
         forbidden.add('(');
+        forbidden.add('>');
+        forbidden.add('<');
+        forbidden.add('=');
     }
 
     TextState(boolean whitespace) {

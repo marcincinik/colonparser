@@ -144,17 +144,17 @@ public class ParserTest {
 
     @Test
     public void binaryComparision1() {
-        assertProgram("t1 > t2", ">", "t1", "t2");
+        assertProgram("t1>t2", ">", "t1", "t2");
     }
 
     @Test
     public void binaryComparision2() {
-        assertProgram("t1 < t2", "<", "t1", "t2");
+        assertProgram("t1<t2", "<", "t1", "t2");
     }
 
     @Test
     public void binaryComparision3() {
-        assertProgram("t1 = t2", "=", "t1", "t2");
+        assertProgram("t1=t2", "=", "t1", "t2");
     }
 
     @Test

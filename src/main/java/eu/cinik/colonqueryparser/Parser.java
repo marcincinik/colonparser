@@ -207,6 +207,44 @@ public class Parser {
         }
     }
 
+    static public Deque<Node> toStack(Node node) {
+        Deque<Node> stack = new LinkedList<>();
+        Parser.NodeVisitor visitor = new Parser.NodeVisitor() {
+
+            @Override
+            public void visit(Parser.AND and) {
+                stack.push(and);
+            }
+
+            @Override
+            public void visit(Parser.OR or) {
+                stack.push(or);
+            }
+
+            @Override
+            public void visit(Parser.KeyValue keyValue) {
+                stack.push(keyValue);
+            }
+
+            @Override
+            public void visit(Parser.Text text) {
+                stack.push(text);
+            }
+
+            @Override
+            public void visit(Parser.Statement statement) {
+                //nothing
+            }
+
+            @Override
+            public void visit(Parser.BinaryComparision binaryComparision) {
+                stack.push(binaryComparision);
+            }
+        };
+        node.visit(visitor);
+        return stack;
+    }
+
     static public List<String> toPolishNotation(Node node) {
         List<String> result = new ArrayList<>();
         node.visit(new NodeVisitor() {
