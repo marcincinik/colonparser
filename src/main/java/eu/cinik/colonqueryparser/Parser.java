@@ -1,4 +1,4 @@
-package eu.cinik.colonparser;
+package eu.cinik.colonqueryparser;
 
 import java.io.IOException;
 import java.io.Reader;

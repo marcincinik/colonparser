@@ -1,7 +1,7 @@
-package eu.cinik.colonparser.example;
+package eu.cinik.colonqueryparser.example;
 
 
-import eu.cinik.colonparser.Parser;
+import eu.cinik.colonqueryparser.Parser;
 
 import java.io.IOException;
 import java.io.StringReader;

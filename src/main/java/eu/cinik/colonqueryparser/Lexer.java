@@ -1,6 +1,6 @@
-package eu.cinik.colonparser;
+package eu.cinik.colonqueryparser;
 
-import eu.cinik.colonparser.Lexer.LexerException;
+import eu.cinik.colonqueryparser.Lexer.LexerException;
 
 import java.io.IOException;
 import java.io.Reader;

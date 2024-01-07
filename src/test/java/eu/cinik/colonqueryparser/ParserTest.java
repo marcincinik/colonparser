@@ -1,4 +1,4 @@
-package eu.cinik.colonparser;
+package eu.cinik.colonqueryparser;
 
 import org.junit.Assert;
 import org.junit.Test;

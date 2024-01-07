@@ -3,13 +3,40 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>gd.wa</groupId>
-    <artifactId>minimal-pom</artifactId>
+    <groupId>eu.cinik</groupId>
+    <artifactId>colonqueryparser</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>minimal-pom</name>
+    <name>colonqueryparser</name>
     <url>http://maven.apache.org</url>
+    <description>
+        Query parser similar to that one of Google written in Java. The parser accepts queries in a form like
+        "key:value"
+        and returns parsed lexem tree.
+        See https://github.com/marcincinik/colonqueryparser
+    </description>
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Marcin Cinik</name>
+            <email>marcin@cinik.eu</email>
+            <organization>cinik.eu</organization>
+            <organizationUrl>http://cinik.eu</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/marcincinik/colonqueryparser.git</connection>
+        <developerConnection>scm:git:https://github.com/marcincinik/colonqueryparser.git</developerConnection>
+        <url>https://github.com/marcincinik/colonqueryparser</url>
+        <tag>main</tag>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -38,4 +65,12 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <name>Central Repository OSSRH</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 </project>

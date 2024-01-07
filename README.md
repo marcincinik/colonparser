@@ -9,10 +9,10 @@ abc def AND x OR y (-key1:value1 OR -key2:value2) -key3:value3
 and example code to parse it and put all conditions on a stack can be like below
 
 ```
-package eu.cinik.colonparser.example;
+package eu.cinik.colonqueryparser.example;
 
 
-import eu.cinik.colonparser.Parser;
+import eu.cinik.colonqueryparser.Parser;
 
 import java.io.IOException;
 import java.io.StringReader;
