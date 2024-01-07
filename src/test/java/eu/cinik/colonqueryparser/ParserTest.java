@@ -159,6 +159,7 @@ public class ParserTest {
 
     @Test
     public void complexTest4() {
+//        assertProgram("market = NASDAQ AND ticker=MSFT.NASDAQ");
         assertParsingNoException("t1 > t2 AND t3 < t4 OR (t5 = t6)");
     }
 

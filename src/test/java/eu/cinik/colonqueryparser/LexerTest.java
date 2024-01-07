@@ -27,14 +27,6 @@ public class LexerTest {
         }
     }
 
-    @Test
-    public void lexerStar() throws IOException {
-        Lexer l = new Lexer();
-        try (StringReader r = new StringReader("*")) {
-            Token t = l.next(r);
-            Assert.assertEquals(new Token(TokenType.STAR), t);
-        }
-    }
 
 
     @Test

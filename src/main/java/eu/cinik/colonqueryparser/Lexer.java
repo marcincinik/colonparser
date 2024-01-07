@@ -16,7 +16,6 @@ class Lexer {
     Lexer() {
         allStates.add(new EOFState());
         allStates.add(new SingleCharState(':', TokenType.COLON));
-        allStates.add(new SingleCharState('*', TokenType.STAR));
         allStates.add(new SingleCharState('-', TokenType.NEG));
         allStates.add(new SingleCharState('(', TokenType.OBRACKET));
         allStates.add(new SingleCharState(')', TokenType.CBRACKET));
@@ -229,7 +228,6 @@ enum TokenType {
     //    DOUBLE_QUOTE,
     COLON,
     WORD,
-    STAR,
     NEG,
     OBRACKET,
     CBRACKET,
