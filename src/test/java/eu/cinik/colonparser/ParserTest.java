@@ -5,6 +5,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.IntStream;
 

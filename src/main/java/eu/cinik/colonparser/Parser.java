@@ -11,7 +11,7 @@ public class Parser {
     private Token currentToken;
     private Reader reader;
 
-    Parser(Reader reader) {
+    public Parser(Reader reader) {
         this.reader = reader;
     }
 
