@@ -4,11 +4,80 @@ import java.io.Reader;
 import java.util.*;
 import java.util.function.Supplier;
 
+/**
+ * <p>Query parser similar to that one of Google written in Java.
+ * The parser accepts queries in a form like "key:value" and returns parsed lexem tree</p>
+ *
+ * <p>Programs are parsed character by character, so ensure that you use {@link java.io.BufferedReader} to speed up parsing</p>
+ * <h2>Syntax: (examples of statements)</h2>
+ * <ul>
+ * <li><i>some text</i> - consists of 2 {@link TextToken}s: 'some' and 'text'</li>
+ * <li><i>&quot;quoted string with a \&quot; inside&quot;</i> - quoted string</li>
+ * <li><i>some_key:some_value</i> - {@link KeyValue}</li>
+ * <li><i>some_key=some_value</i> - use of assignment operator {@link BinaryComparision.Operator}</li>
+ * <li><i>some_key&lt;some_value</i> - use of inequality operator {@link BinaryComparision.Operator}</li>
+ * <li><i>some_key&gt;some_value</i> - use of inequality operator {@link BinaryComparision.Operator}</li>
+ * <li><i>-some_key:some_value</i> - negated {@link KeyValue}</li>
+ * <li><i>key:value AND term OR something</i> - use of {@link AND}, {@link OR} operators</li>
+ * <li><i>key:value AND (term OR something)</i> - use of parenthesis</li>
+ * </ul>
+ *
+ * <p>
+ *     A term represented by {@link TextToken} is any non-whitespace character string (as per {@link Character#isWhitespace(char)})
+ * </p>
+ * <p>
+ *     All whitespaces (as per {@link Character#isWhitespace(char)}) except for quoted strings are ignored.
+ * </p>
+ * <p>
+ *  Quoted strings is any text within double quotes. Any character inside double quotes can be quoted using backslash '\'
+ * </p>
+ *
+ * <p> Example use:</p>
+ * <pre>
+ *     {@code
+ *         String someTextToMatch = "some text to match abc";
+ *         Map<String, String> dataToMatch = new HashMap<>();
+ *         dataToMatch.put("key1", "value1");
+ *         dataToMatch.put("key2", "value2");
+ *         dataToMatch.put("key3", "value3");
+ *         Deque<Boolean> calcStack = new LinkedList<>();
+ *         try (StringReader r = new StringReader("abc \"def and foo\" AND x OR y (-key1:valuezz OR key2:value2) key3:value3")) {
+ *             Deque<Parser.Node> stack = Parser.toStack(new Parser(r).statement());
+ *             while (!stack.isEmpty()) {
+ *                 Parser.Node node = stack.pop();
+ *                 if (node instanceof Parser.Text) {
+ *                     calcStack.push(someTextToMatch.contains(((Parser.Text) node).getText()));
+ *                 } else if (node instanceof Parser.KeyValue) {
+ *                     String key = ((Parser.KeyValue) node).getKey();
+ *                     String value = ((Parser.KeyValue) node).getValue();
+ *                     Boolean neg = ((Parser.KeyValue) node).isNeg();
+ *                     calcStack.push(!neg ? Objects.equals(dataToMatch.get(key), value) : !Objects.equals(dataToMatch.get(key), value));
+ *                 } else if (node instanceof Parser.AND) {
+ *                     Boolean left = calcStack.pop();
+ *                     Boolean right = calcStack.pop();
+ *                     calcStack.push(left && right);
+ *                 } else if (node instanceof Parser.OR) {
+ *                     Boolean left = calcStack.pop();
+ *                     Boolean right = calcStack.pop();
+ *                     calcStack.push(left || right);
+ *                 } else throw new RuntimeException("unknown token node");
+ *             }
+ *             System.out.println("result:" + calcStack);
+ *         }
+ *     }
+ *     </pre>
+ */
 public class Parser {
     private Lexer lexer = new Lexer();
     private Token currentToken;
     private Reader reader;
 
+    /**
+     * Creates new parser for a program text to be read from supplied reader.
+     * Programs are parsed character by character, so ensure that you use {@link java.io.BufferedReader} to speed up parsing
+     *
+     * @param reader the reader to read program to parse
+     */
     public Parser(Reader reader) {
         this.reader = reader;
     }
@@ -58,6 +127,11 @@ public class Parser {
         } else return (T) token;
     }
 
+    /**
+     * Parse a single statement and turn it into nodes tree.
+     *
+     * @return tree of parsed nodes
+     */
     public Node statement() {
         List<Node> result = new ArrayList<>();
         Node n;
@@ -201,12 +275,21 @@ public class Parser {
         //throw new ParserException("invalid token " + this.currentToken);
     }
 
+    /**
+     * Generic exception for all parsing issues
+     */
     static public class ParserException extends RuntimeException {
         public ParserException(String message) {
             super(message);
         }
     }
 
+    /**
+     * Converts parsed node tree to a stack
+     *
+     * @param node node tree
+     * @return stack
+     */
     static public Deque<Node> toStack(Node node) {
         Deque<Node> stack = new LinkedList<>();
         Parser.NodeVisitor visitor = new Parser.NodeVisitor() {
@@ -245,6 +328,12 @@ public class Parser {
         return stack;
     }
 
+    /**
+     * Converts parsed node tree to <a href="https://en.wikipedia.org/wiki/Reverse_Polish_notation">polish notation</a> where each term is represented by a single string in the list
+     *
+     * @param node
+     * @return
+     */
     static public List<String> toPolishNotation(Node node) {
         List<String> result = new ArrayList<>();
         node.visit(new NodeVisitor() {
@@ -285,24 +374,63 @@ public class Parser {
     }
 
 
+    /**
+     * A node which represents token in a statement
+     */
     public interface Node {
+        /**
+         * Implementation of visitor pattern
+         *
+         * @param visitor visitor to be invoked on all nodes withing the token tree
+         */
         void visit(NodeVisitor visitor);
     }
 
+    /**
+     * Implementation of visitor for {@link Node}s tree
+     */
     public interface NodeVisitor {
+        /**
+         * Callback when visiting {@link AND} operator
+         *
+         * @param and operator
+         */
         void visit(AND and);
 
+        /**
+         * Callback when visiting {@link OR} operator
+         *
+         * @param or operator
+         */
         void visit(OR or);
 
+        /**
+         * Key value with optional negation
+         *
+         * @param keyValue key value
+         */
         void visit(KeyValue keyValue);
 
+        /**
+         * A term represented by {@link TextToken} is any non-whitespace character string (as per {@link Character#isWhitespace(char)})
+         *
+         * @param text
+         */
         void visit(Text text);
 
+        /**
+         * Statement
+         *
+         * @param statement
+         */
         void visit(Statement statement);
 
         void visit(BinaryComparision binaryComparision);
     }
 
+    /**
+     * Binary operator
+     */
     static abstract class Binary implements Node {
         protected Node left;
         protected Node right;
@@ -336,8 +464,11 @@ public class Parser {
 
     }
 
+    /**
+     * Logical AND operator
+     */
     static public class AND extends Binary {
-        public AND(Node left, Node right) {
+        AND(Node left, Node right) {
             super(left, right);
         }
 
@@ -348,10 +479,17 @@ public class Parser {
             right.visit(visitor);
         }
 
+        @Override
+        public String toString() {
+            return "AND";
+        }
     }
 
+    /**
+     * Logical OR operator
+     */
     static public class OR extends Binary {
-        public OR(Node left, Node right) {
+        OR(Node left, Node right) {
             super(left, right);
         }
 
@@ -361,12 +499,29 @@ public class Parser {
             left.visit(visitor);
             right.visit(visitor);
         }
+
+        @Override
+        public String toString() {
+            return "OR";
+        }
     }
 
+    /**
+     * Comparison operator
+     */
     static public class BinaryComparision extends Binary {
         public enum Operator {
+            /**
+             * in-equality operator &gt;
+             */
             HT(">"),
+            /**
+             * in-equality operator &lt;
+             */
             LT("<"),
+            /**
+             * equality operator '='
+             */
             EQ("=");
             private final String label;
 
@@ -377,11 +532,16 @@ public class Parser {
             public String getLabel() {
                 return label;
             }
+
+            @Override
+            public String toString() {
+                return label;
+            }
         }
 
         private Operator operator;
 
-        public BinaryComparision(Operator operator, Node left, Node right) {
+        BinaryComparision(Operator operator, Node left, Node right) {
             super(left, right);
             this.operator = operator;
         }
@@ -396,8 +556,17 @@ public class Parser {
         public Operator getOperator() {
             return operator;
         }
+
+        @Override
+        public String toString() {
+            return operator.label;
+        }
     }
 
+    /**
+     * A term represented by {@link TextToken} is any non-whitespace character string (as per {@link Character#isWhitespace(char)}).
+     * Also quoted string without surrounding quotes.
+     */
     static public class Text implements Node {
         private String text;
 
@@ -413,14 +582,22 @@ public class Parser {
         public void visit(NodeVisitor visitor) {
             visitor.visit(this);
         }
+
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 
+    /**
+     * 'key:value' with optional negation '-key:value'
+     */
     static public class KeyValue implements Node {
         private boolean neg;
         private String key;
         private String value;
 
-        public KeyValue(boolean neg, String key, String value) {
+        KeyValue(boolean neg, String key, String value) {
             this.neg = neg;
             this.key = key;
             this.value = value;
@@ -455,8 +632,21 @@ public class Parser {
         public void visit(NodeVisitor visitor) {
             visitor.visit(this);
         }
+
+        @Override
+        public String toString() {
+            StringBuilder b = new StringBuilder();
+            if (neg) b.append("-");
+            b.append(key);
+            b.append(":");
+            b.append(value);
+            return b.toString();
+        }
     }
 
+    /**
+     * Statement is just a list of nodes
+     */
     static public class Statement implements Node {
         private List<Node> nodes;
 

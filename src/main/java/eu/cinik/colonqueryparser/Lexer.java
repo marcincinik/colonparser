@@ -56,6 +56,9 @@ class Lexer {
         return token;
     }
 
+    /**
+     * Exception represented all token parsing (lexing) problems
+     */
     static class LexerException extends RuntimeException {
         public LexerException(String message) {
             super(message);
